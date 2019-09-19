@@ -1,10 +1,14 @@
 package com.branch.example.android.calculator.data
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.branch.example.android.calculator.utils.notifyObserver
+import com.branch.example.android.calculator.utils.throwDebugException
+import com.branch.example.android.calculator.utils.toast
 
-class MyViewModel : ViewModel() {
+class CalculatorViewModel : ViewModel() {
     val expression: MutableLiveData<MutableList<Symbol>> by lazy {
         MutableLiveData(mutableListOf<Symbol>())
     }
@@ -19,7 +23,7 @@ class MyViewModel : ViewModel() {
         return expression.value!!.isEmpty()
     }
 
-    fun add(s: Symbol) {
+    private fun add(s: Symbol) {
         expression.value?.add(s)
         expression.notifyObserver()
     }
@@ -38,14 +42,9 @@ class MyViewModel : ViewModel() {
         return expression.value?.last()
     }
 
-    fun size(): Int {
+    private fun size(): Int {
         return expression.value?.size ?: 0
     }
-
-//    fun setLast(s: Symbol) {
-//        expression.value?.set(expression.value!!.size - 1, s)
-//        expression.notifyObserver()
-//    }
 
     fun concatenate(): String {
         val iter = expression.value?.iterator() ?: return ""
@@ -92,12 +91,36 @@ class MyViewModel : ViewModel() {
         return Symbol(floatVal.toString())
     }
 
-    fun buttonClicked(symbol: Symbol): Boolean {
+    fun compute(c: Context) {
+        if (isEmpty()) return
+
+        // check if valid expression
+        val last = last() ?: return
+        if (last.isOp) {
+            c.toast("Invalid expression")
+            return
+        }
+
+        // fixes expression
+        if (expression.value?.first()?.stringSymbol == "-") {
+            add(0, Symbol("0"))
+        }
+
+        // compute result
+        reduceList(true)
+        reduceList(false)
+
+        if (expression.value?.size != 1) {
+            c.throwDebugException("Computation failed, Expression size != 1")
+        }
+    }
+
+    fun onNumberOrOperatorClick(symbol: Symbol, toast: Toast) {
         if (!symbol.isOp) {
             if (isEmpty()) {
                 add(symbol)
             } else {
-                val last = last() ?: return false
+                val last = last() ?: return
                 if (!last.isOp) {
                     // last symbol was a digit
                     if (last.stringSymbol == "0") {
@@ -110,8 +133,10 @@ class MyViewModel : ViewModel() {
                 } else {
                     // last symbol was an operator
                     if (last.stringSymbol == "/" && symbol.stringSymbol == "0") {
-                        // zero division, show toast if not yet showing
-                        return false
+                        // zero division or other invalid operation, show toast if not yet showing
+                        if (toast.view == null || toast.view?.isShown == false) {
+                            toast.show()
+                        }
                     } else {
                         add(symbol)
                     }
@@ -119,13 +144,12 @@ class MyViewModel : ViewModel() {
             }
         } else {
             if (isEmpty()) {
-                if (symbol.stringSymbol != "-") return false
+                if (symbol.stringSymbol != "-") return
                 add(symbol)
             } else if (last()?.isOp == false) {
                 // last symbol was a digit
                 add(symbol)
             }
         }
-        return true
     }
 }

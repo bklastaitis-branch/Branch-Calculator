@@ -20,10 +20,6 @@
             android:id="@+id/plus"
             android:text="+"
             style="@style/KeyboardButtonStyle"/>
-        <TextView
-            android:id="@+id/delete"
-            android:text="D"
-            style="@style/KeyboardButtonStyle"/>
     </TableRow>
 
     <TableRow>
@@ -42,10 +38,6 @@
         <TextView
             android:id="@+id/minus"
             android:text="-"
-            style="@style/KeyboardButtonStyle"/>
-        <TextView
-            android:id="@+id/left_parentheses"
-            android:text="("
             style="@style/KeyboardButtonStyle"/>
     </TableRow>
 
@@ -66,17 +58,16 @@
             android:id="@+id/multiply"
             android:text="*"
             style="@style/KeyboardButtonStyle"/>
-        <TextView
-            android:id="@+id/right_parentheses"
-            android:text=")"
-            style="@style/KeyboardButtonStyle"/>
     </TableRow>
 
     <TableRow>
         <TextView
+            android:id="@+id/delete"
+            android:text="D"
+            style="@style/KeyboardButtonStyle"/>
+        <TextView
             android:id="@+id/zero"
             android:text="0"
-            android:layout_column="1"
             style="@style/KeyboardButtonStyle"/>
         <TextView
             android:id="@+id/divide"

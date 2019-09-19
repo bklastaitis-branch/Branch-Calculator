@@ -3,51 +3,46 @@ package com.branch.example.android.calculator.controllers
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.view.View.GONE
 import android.widget.TextView
 import android.widget.Toast
 import com.branch.example.android.calculator.R
-import com.branch.example.android.calculator.utils.isFirstLaunch
-import com.branch.example.android.calculator.utils.putPref
+import com.branch.example.android.calculator.utils.throwDebugException
+import com.branch.example.android.calculator.utils.toast
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.keyboard.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val zeroDivisionMessage: Toast = Toast.makeText(
-        this, "Cannot divide by zero!", Toast.LENGTH_LONG)
+    private lateinit var zeroDivisionMessage: Toast
     private var expression = mutableListOf<Symbol>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (isFirstLaunch()) {
-            val onboardingPanel = onboarding_viewstub?.inflate()
-            putPref(R.string.pref_is_first_launch, false)
-            onboardingPanel?.setOnClickListener { onboardingPanel.visibility = GONE }
+        zeroDivisionMessage = Toast.makeText(this, "Cannot divide by zero!", Toast.LENGTH_LONG)
+
+        one?.setOnClickListener(numberButtonListener)
+        two?.setOnClickListener(numberButtonListener)
+        three?.setOnClickListener(numberButtonListener)
+        four?.setOnClickListener(numberButtonListener)
+        five?.setOnClickListener(numberButtonListener)
+        six?.setOnClickListener(numberButtonListener)
+        seven?.setOnClickListener(numberButtonListener)
+        eight?.setOnClickListener(numberButtonListener)
+        nine?.setOnClickListener(numberButtonListener)
+        zero?.setOnClickListener(numberButtonListener)
+
+        plus?.setOnClickListener(operatorButtonListener)
+        minus?.setOnClickListener(operatorButtonListener)
+        divide?.setOnClickListener(operatorButtonListener)
+        multiply?.setOnClickListener(operatorButtonListener)
+
+        delete?.setOnClickListener {
+            expression.removeAt(expression.size - 1)
+            updateDisplay()
         }
-
-        one?.setOnClickListener { numberButtonListener }
-        two?.setOnClickListener { numberButtonListener }
-        three?.setOnClickListener { numberButtonListener }
-        four?.setOnClickListener { numberButtonListener }
-        five?.setOnClickListener { numberButtonListener }
-        six?.setOnClickListener { numberButtonListener }
-        seven?.setOnClickListener { numberButtonListener }
-        eight?.setOnClickListener { numberButtonListener }
-        nine?.setOnClickListener { numberButtonListener }
-        zero?.setOnClickListener { numberButtonListener }
-
-        plus?.setOnClickListener { operatorButtonListener }
-        minus?.setOnClickListener { operatorButtonListener }
-        divide?.setOnClickListener { operatorButtonListener }
-        multiply?.setOnClickListener { operatorButtonListener }
-        left_parentheses?.setOnClickListener { operatorButtonListener }
-        right_parentheses?.setOnClickListener { operatorButtonListener }
-
-        delete?.setOnClickListener { expression.removeAt(expression.size - 1) }
-        equal?.setOnClickListener {  }
+        equal?.setOnClickListener { compute(); updateDisplay() }
     }
 
     private var numberButtonListener: View.OnClickListener = View.OnClickListener {
@@ -60,16 +55,20 @@ class MainActivity : AppCompatActivity() {
         } else {
             val last = expression.last()
             if (!last.isOp) {
+                // last symbol was a digit
                 if (last.stringSymbol == "0") {
+                    // replace
                     expression[expression.size - 1] = symbol
                 } else {
+                    // combine
                     expression[expression.size - 1] =
                         Symbol(last.stringSymbol + symbol.stringSymbol)
                 }
             } else {
+                // last symbol was an operator
                 if (last.stringSymbol == "/" && symbol.stringSymbol == "0") {
                     // zero division, show toast if not yet showing
-                    if (zeroDivisionMessage.view?.isShown == false) {
+                    if (zeroDivisionMessage.view == null || zeroDivisionMessage.view?.isShown == false) {
                         zeroDivisionMessage.show()
                     }
                 } else {
@@ -87,20 +86,11 @@ class MainActivity : AppCompatActivity() {
         val symbol = Symbol(it.text.toString())
 
         if (expression.isEmpty()) {
-            if (symbol.stringSymbol != "(" || symbol.stringSymbol != "-") return@OnClickListener
+            if (symbol.stringSymbol != "-") return@OnClickListener
             expression.add(symbol)
-        } else {
-            val last = expression.last()
-            if (!last.isOp) {
-                // last symbol was a digit
-                if (symbol.stringSymbol == "(") return@OnClickListener
-                expression.add(symbol)
-            } else {
-                // last symbol was an operator
-                if (symbol.stringSymbol == "(") {
-                    expression.add(symbol)
-                }
-            }
+        } else if (!expression.last().isOp) {
+            // last symbol was a digit
+            expression.add(symbol)
         }
 
         updateDisplay()
@@ -113,49 +103,72 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun compute() {
+        if (expression.isEmpty()) return
 
-        var result: String
-        while (containsPriorityOps()) {
-            // replace priority sublist with computed val
-            val sublist = getFirstPrioritySublist()
+        // check if valid expression
+        val last = expression.last()
+        if (last.isOp) {
+            toast("Invalid expression")
+            return
+        }
+
+        // fixes expression
+        if (expression.first().stringSymbol == "-") {
+            expression.add(0, Symbol("0"))
+        }
+
+        //compute result
+        expression = computeSublist(expression, true)
+        expression = computeSublist(expression, false)
+
+        if (expression.size != 1) {
+            throwDebugException("Computation failed, Expression size != 1")
         }
     }
 
-    private fun validExpression(sublist: List<Symbol>) {
+    private fun computeSublist(sublist: MutableList<Symbol>, priorityOpsOnly: Boolean):MutableList<Symbol> {
+        val iter: Iterator<Symbol> = sublist.toTypedArray().iterator()
+        var prev: Symbol? = null; var next: Symbol? = null
 
-    }
+        var index = -1
+        while (iter.hasNext()) {
+            val element = iter.next(); index++
 
-    private fun containsPriorityOps(): Boolean {
-        for (element in expression) {
-            if (element.isPriorityOp) return true
-        }
-        return false
-    }
+            if (if (priorityOpsOnly) element.isPriorityOp else element.isOp) {
+                next = iter.next(); index++ // moved up
 
-    private fun getFirstPrioritySublist(): List<Symbol> {
-        var startIndex: Int = -1; var endIndex: Int = -1
-        for ((index, element) in expression.iterator().withIndex()) {
-            if (element.isPriorityOp) {
-                if (element.isParentheses) {
-                    startIndex = index + 1
-                } else {
+                val prevNum = prev?.num
+                val nextNum = next.num
+                if (prevNum == null || nextNum == null) throwDebugException()
 
-                }
-
-                if (startIndex < 0) {
-                    startIndex = index
-                } else {
-                    endIndex = index; break
-                }
+                prev = singleOp(element.stringSymbol, prevNum!!, nextNum!!)
+                sublist[index - 2] = prev
+                sublist.removeAt(index - 1); sublist.removeAt(index - 1); index -= 2
+            } else if (!element.isOp) {
+                prev = element
             }
         }
-        if (startIndex < 0 || endIndex < 0) return emptyList()
-        expression.subList(startIndex, endIndex)
+        return sublist
+    }
+
+
+    private fun singleOp(op: String, num1: Float, num2: Float): Symbol {
+        val floatVal = when (op) {
+            "+" -> num1 + num2
+            "-" -> num1 - num2
+            "*" -> num1 * num2
+            "/" -> num1 / num2
+            else -> {
+                throwDebugException()
+                0f
+            }
+        }
+        return Symbol(floatVal.toString())
     }
 
     private class Symbol(val stringSymbol: String) {
-        var isParentheses: Boolean = stringSymbol == "(" || stringSymbol == ")"
-        var isPriorityOp: Boolean = stringSymbol == "*" || stringSymbol == "/" || isParentheses
-        var isOp: Boolean = stringSymbol == "+" || stringSymbol == "-" || isPriorityOp
+        val isPriorityOp: Boolean = stringSymbol == "*" || stringSymbol == "/"
+        val isOp: Boolean = stringSymbol == "+" || stringSymbol == "-" || isPriorityOp
+        val num: Float? = if (!isOp) stringSymbol.toFloat() else null
     }
 }

@@ -11,6 +11,7 @@
         android:id="@+id/computations_display"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        style="@style/DisplayStyle"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -23,15 +24,17 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="@dimen/portrait_midscreen"/>
 
-    <include
+    <TableLayout
         android:id="@+id/keyboard"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        layout="@layout/keyboard"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/portrait_midscreen"/>
-
+        app:layout_constraintTop_toBottomOf="@+id/portrait_midscreen"
+        android:gravity="center">
+        <include
+            layout="@layout/rows"/>
+    </TableLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

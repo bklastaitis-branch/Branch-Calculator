@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
 import com.branch.example.android.calculator.BuildConfig
 import com.branch.example.android.calculator.R
 import java.lang.Exception
@@ -89,4 +90,8 @@ fun Context.geBooleanPref(i: String): Boolean {
 // shortcuts
 fun Context.isFirstLaunch(): Boolean {
     return !hasPref(R.string.pref_is_first_launch)
+}
+
+fun <T> MutableLiveData<T>.notifyObserver() {
+    this.value = this.value
 }

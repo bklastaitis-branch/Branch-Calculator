@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="portrait_midscreen">0.4</dimen>
+    <dimen name="landscape_midscreen">0.6</dimen>
+
+</resources>

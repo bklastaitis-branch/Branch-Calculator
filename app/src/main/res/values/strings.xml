@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Branch Calculator</string>
+    <string name="onboarding_text">Welcome to Branch Calculator!</string>
+    <string name="computations_display_hint">Do some math…</string>
+</resources>

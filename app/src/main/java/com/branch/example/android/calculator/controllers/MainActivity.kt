@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var model: CalculatorViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.AppTheme)
+        setTheme(R.style.AppTheme) // https://stackoverflow.com/questions/5486789/how-do-i-make-a-splash-screen
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 

@@ -33,8 +33,14 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.2.0'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+
+    // required
+    implementation 'io.branch.sdk.android:library:3.+'
+    // optional
+    implementation 'androidx.browser:browser:1.0.0' // Chrome Tab matching
+    implementation 'com.google.android.gms:play-services-ads:16.+' // GAID matching
+    implementation 'com.google.firebase:firebase-appindexing:18.+' // App indexing
 
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version" // ViewModel/LiveData (for preserving data on rotation)
 }

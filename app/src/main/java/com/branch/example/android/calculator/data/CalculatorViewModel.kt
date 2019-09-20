@@ -1,12 +1,17 @@
 package com.branch.example.android.calculator.data
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.branch.example.android.calculator.controllers.MainActivity
 import com.branch.example.android.calculator.utils.notifyObserver
 import com.branch.example.android.calculator.utils.throwDebugException
 import com.branch.example.android.calculator.utils.toast
+import io.branch.indexing.BranchUniversalObject
+import io.branch.referral.util.BRANCH_STANDARD_EVENT
+import io.branch.referral.util.BranchEvent
 
 class CalculatorViewModel : ViewModel() {
     val expression: MutableLiveData<MutableList<Symbol>> by lazy {
@@ -23,9 +28,13 @@ class CalculatorViewModel : ViewModel() {
         return expression.value!!.isEmpty()
     }
 
-    private fun add(s: Symbol) {
+    fun add(s: Symbol) {
         expression.value?.add(s)
         expression.notifyObserver()
+    }
+
+    fun clear() {
+        expression.value?.clear()
     }
 
     fun add(index: Int, s: Symbol) {
@@ -53,7 +62,7 @@ class CalculatorViewModel : ViewModel() {
         return expressionString
     }
 
-    fun reduceList(priorityOpsOnly: Boolean) {
+    private fun reduceList(priorityOpsOnly: Boolean, c: MainActivity) {
         val iter: Iterator<Symbol> = expression.value?.toTypedArray()?.iterator() ?: return
         var prev: Symbol? = null; var next: Symbol? = null
 
@@ -75,6 +84,11 @@ class CalculatorViewModel : ViewModel() {
                 prev = element
             }
         }
+        if (!priorityOpsOnly &&
+            expression.value?.first()?.num != null &&
+            expression.value?.first()?.num!! > 100f) {
+            BranchEvent(BRANCH_STANDARD_EVENT.UNLOCK_ACHIEVEMENT).setDescription("Computation result exceeded 100!").logEvent(c)
+        }
         expression.notifyObserver()
     }
 
@@ -91,7 +105,7 @@ class CalculatorViewModel : ViewModel() {
         return Symbol(floatVal.toString())
     }
 
-    fun compute(c: Context) {
+    fun compute(c: MainActivity) {
         if (isEmpty()) return
 
         // check if valid expression
@@ -107,8 +121,8 @@ class CalculatorViewModel : ViewModel() {
         }
 
         // compute result
-        reduceList(true)
-        reduceList(false)
+        reduceList(true, c)
+        reduceList(false, c)
 
         if (expression.value?.size != 1) {
             c.throwDebugException("Computation failed, Expression size != 1")

@@ -1,7 +1,5 @@
 package com.branch.example.android.calculator.data
 
-import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,7 +7,6 @@ import com.branch.example.android.calculator.controllers.MainActivity
 import com.branch.example.android.calculator.utils.notifyObserver
 import com.branch.example.android.calculator.utils.throwDebugException
 import com.branch.example.android.calculator.utils.toast
-import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.util.BRANCH_STANDARD_EVENT
 import io.branch.referral.util.BranchEvent
 
@@ -87,6 +84,7 @@ class CalculatorViewModel : ViewModel() {
         if (!priorityOpsOnly &&
             expression.value?.first()?.num != null &&
             expression.value?.first()?.num!! > 100f) {
+            // https://docs.branch.io/apps/v2event/#android_2
             BranchEvent(BRANCH_STANDARD_EVENT.UNLOCK_ACHIEVEMENT).setDescription("Computation result exceeded 100!").logEvent(c)
         }
         expression.notifyObserver()
